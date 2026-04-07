@@ -1,0 +1,12 @@
+{
+    "folder-customization.folders": [
+        {
+            "path": "test server multi\\client-side-stuff\\",
+            "color": "foldercustomization.AnsiColor28"
+        },
+        {
+            "path": "test server multi\\server-side-stuff\\",
+            "color": "foldercustomization.AnsiColor14"
+        }
+    ]
+}
