@@ -7,12 +7,15 @@ import { createServer } from 'http'
 const app = express();
 const server = createServer(app)
 class Player {
-    constructor(x,z,y,yaw,pitch,name) {
+    constructor(x,z,y,yaw,pitch,health,hunger,thirst,name) {
         this.x = x
         this.z = z
         this.y = y
         this.yaw = yaw
         this.pitch = pitch
+        this.health = health
+        this.hunger = hunger
+        this.thirst = thirst
         this.name = name
     }
 }
@@ -33,7 +36,7 @@ const wss = new WebSocketServer({ server });
                     const username = decoded.usr
                     ws.username = username
                     connections.set(username, ws)
-                    online_usr.set(username, new Player(0, 0, 0, 0, 0, username))
+                    online_usr.set(username, new Player(0, 0, 0, 0, 0, 100,100,100, username))
                     ws.send(JSON.stringify({ type: 'auth', status: 'OK' }))
                 } catch {
                     ws.close()
@@ -46,6 +49,9 @@ const wss = new WebSocketServer({ server });
                     const initial_x = player.x
                     const initial_y = player.y
                     const initial_z = player.z
+                    const initial_h = player.health
+                    const initial_hunger = player.hunger
+                    const initial_thirst = player.thirst
                     const new_x = mouv.x
                     const new_y = mouv.y
                     const new_z = mouv.z
@@ -64,7 +70,7 @@ const wss = new WebSocketServer({ server });
                                 return
                                 }
                                 else {
-                                    online_usr.set(ws.username, new Player(new_x, new_y, new_z, new_yaw, new_pitch, ws.username))
+                                    online_usr.set(ws.username, new Player(new_x, new_y, new_z, new_yaw, new_pitch, initial_h,initial_hunger,initial_thirst,ws.username))
                                 }
                 } catch {
                     ws.close()
