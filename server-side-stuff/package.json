@@ -1,6 +1,7 @@
 {
     "type": "module",
     "dependencies": {
+        "@dimforge/rapier3d-compat": "^0.19.3",
         "@loxjs/node-base64": "^2.0.3",
         "dotenv": "^16.4.7",
         "express": "^4.21.2",

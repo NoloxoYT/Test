@@ -1,0 +1,12 @@
+[
+    {
+        "DMR": {
+            "name": "DMR",
+            "range": "150"
+        },
+        "G-Lock 17": {
+            "name": "Glock 17",
+            "range": "15"
+        }
+    }
+]
