@@ -4,3 +4,4 @@
 **/godot-dev
 package-lock.json
 *.exe
+**/.vscode/

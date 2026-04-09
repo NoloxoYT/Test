@@ -7,6 +7,9 @@
         {
             "path": "test server multi\\server-side-stuff\\",
             "color": "foldercustomization.AnsiColor14"
+        },
+        {
+            "path": "test server multi\\server-side-stuff\\node_modules\\"
         }
     ]
 }
