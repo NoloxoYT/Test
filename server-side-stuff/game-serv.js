@@ -18,7 +18,7 @@ const ground = world.createRigidBody(groundDesc)
 const groundCollider = RAPIER.ColliderDesc.cuboid(100, 0.1, 100)
 world.createCollider(groundCollider, ground)
 class Player {
-    constructor(x,z,y,yaw,pitch,health,hunger,thirst,hand,name) {
+    constructor(x,z,y,yaw,pitch,health,hunger,thirst,inventory,hand,name) {
         this.x = x
         this.z = z
         this.y = y
@@ -27,6 +27,7 @@ class Player {
         this.health = health
         this.hunger = hunger
         this.thirst = thirst
+        this.inv = inventory
         this.hand = hand
         this.name = name
     }
@@ -36,8 +37,8 @@ const SECRET = process.env.JWT_SECRET;
 
 const connections = new Map()
 async function start() {
-    const range_fron_weapon = await open({
-        filename: 'range.db',
+    const weapon = await open({
+        filename: 'guns.db',
         driver: sqlite3.Database
     });
 const wss = new WebSocketServer({ server });
@@ -50,7 +51,7 @@ function DirectionsFromAngle(yaw,pitch){
         z: Math.cos(pitchRad) * Math.cos(yawRad)
     }
 }
-function ballisticRaycast(origin, direction, speed, gravity, maxTime, steps, world) {
+function ballisticRaycast(origin, direction, speed, gravity, maxTime, steps, weight ,world) {
     const dt = maxTime / steps
     let pos = { ...origin }
     let vel = {
@@ -58,7 +59,7 @@ function ballisticRaycast(origin, direction, speed, gravity, maxTime, steps, wor
         y: direction.y * speed,
         z: direction.z * speed
     }
-
+    const gravity = gravity * (weight / 1000)
     for (let i = 0; i < steps; i++) {
         // position suivante
         const nextPos = {
@@ -104,7 +105,7 @@ online_usr.forEach((player, username) => {
                     const username = decoded.usr
                     ws.username = username
                     connections.set(username, ws)
-                    online_usr.set(username, new Player(0, 0, 0, 0, 0, 100,100,100,0,username))
+                    online_usr.set(username, new Player(0, 0, 0, 0, 0, 100,100,100,[],username))
                     const player = online_usr.get(ws.username);
                     const rb = world.createRigidBody(
                         RAPIER.RigidBodyDesc.dynamic().setTranslation(player.x, player.y, player.z))
@@ -143,7 +144,7 @@ online_usr.forEach((player, username) => {
                                 return
                                 }
                                 else {
-                                    online_usr.set(ws.username, new Player(new_x,new_y,new_z,new_yaw,new_pitch,initial_h,initial_hunger,initial_thirst,0,ws.username))
+                                    online_usr.set(ws.username, new Player(new_x,new_y,new_z,new_yaw,new_pitch,initial_h,initial_hunger,initial_thirst,[],0,ws.username))
                                 }
                 } catch {
                     ws.close()
@@ -157,39 +158,42 @@ online_usr.forEach((player, username) => {
                     const initial_y = player.y
                     const initial_z = player.z
                     const gun = player.hand
-                    const range = await range_fron_weapon.get("SELECT * FROM range WHERE gun_name = ?", [gun]).range
+                    const ammo = gun.ammo
+                    const current_weapon = JSON.parse(weapon.run("SELECT from guns WHERE name = ?", [gun]))
+                    const weight = current_weapon
                     const yaw = angles.yaw
                     const pitch = angles.pitch
                     const initial_h = player.health
                     const initial_hunger = player.hunger
                     const initial_thirst = player.thirst
-                        const dir = DirectionsFromAngle(player.yaw, player.pitch)
-                        const result = ballisticRaycast(
-                            { x: player.x, y: player.y, z: player.z },
-                            dir,
-                            range,
-                            9.81,
-                            5,
-                            100,
-                            world
-                        )
-                        const impact = colliderMap.get(result.collider.handle)
-                        if (impact.type == 'player'){
-                            const player_name = impact.username
-                            const player = online_usr.get(player_name)
-                            const angles = msg.angle
-                            const initial_x = player.x
-                            const initial_y = player.y
-                            const initial_z = player.z
-                            const gun = player.hand
-                            const yaw = angles.yaw
-                            const pitch = angles.pitch
-                            const initial_h = player.health
-                            const initial_hunger = player.hunger
-                            const initial_thirst = player.thirst
-                            const new_health = initial_h -= gun_dmg
-                            online_usr.set(player_name, new Player(initial_x,initial_y,initial_z,yaw,pitch,new_health,initial_hunger,initial_thirst,gun,player_name))
-                        }
+                    const dir = DirectionsFromAngle(player.yaw, player.pitch)
+                    const result = ballisticRaycast(
+                        { x: player.x, y: player.y, z: player.z },
+                        dir,
+                        range,
+                        9.81,
+                        5,
+                        100,
+                        world
+                    )
+                    const impact = colliderMap.get(result.collider.handle)
+                    if (impact.type == 'player'){
+                        const imp_player_name = impact.username
+                        const imp_player = online_usr.get(player_name)
+                        const imp_initial_x = imp_player.x
+                        const imp_initial_y = imp_player.y
+                        const imp_initial_z = imp_player.z
+                        const imp_gun = imp_player.hand
+                        const imp_inv = imp_player.inv
+                        const imp_yaw = imp_player.yaw
+                        const imp_pitch = imp_player.pitch
+                        const imp_initial_h = player.health
+                        const imp_initial_hunger = player.hunger
+                        const imp_initial_thirst = player.thirst
+                        const new_health = imp_initial_h -= gun_dmg
+                        online_usr.set(imp_player_name, new Player(imp_initial_x,imp_initial_y,imp_initial_z,imp_yaw,imp_pitch,new_health,imp_initial_hunger,imp_initial_thirst,imp_inv,imp_gun,imp_player_name))
+                    }
+                    
                 } catch {
                     ws.close()
                 }

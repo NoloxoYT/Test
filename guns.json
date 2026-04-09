@@ -2,11 +2,50 @@
     {
         "DMR": {
             "name": "DMR",
-            "range": "150"
+            "supported_ammo": {
+                "308 WIN": {
+                    "velocity": "810",
+                    "weight": "10.89"
+                }
+            },
+            "magazine_supported": {
+                "name": "15 round DMR mag",
+                "compatible_ammo": ["308 WIN"]
+            }
         },
         "G-Lock 17": {
             "name": "Glock 17",
-            "range": "15"
+            "supported_ammo": {
+                "Federal Premium LE JHP": {
+                    "velocity": "350",
+                    "weight": "8.04"
+                },
+                "Winchester FMJ": {
+                    "velocity": "363",
+                    "weight": "7.45"
+                },
+                "PMC Bronze FMJ": {
+                    "velocity": "350",
+                    "weight": "7.45"
+                }
+            },
+            "magazine_supported": {
+                "name": "Pmag 17 round",
+                "compatible_ammo": ["Federal Premium LE JHP", "Winchester FMJ", "PMC Bronze FMJ"]
+            }
+        },
+        "FAMAS": {
+            "name": "FAMAS",
+            "supported_ammo": {
+                "7.62mm NATO": {
+                    "velocity": "853",
+                    "weight": "9.53"
+                }
+            },
+            "magazine_supported": {
+                "name": "30round STANAG",
+                "compatible_ammo": ["7.62mm NATO"]
+            }
         }
     }
 ]
