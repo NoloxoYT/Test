@@ -41,6 +41,10 @@ async function start() {
         filename: 'guns.db',
         driver: sqlite3.Database
     });
+    const user = await open({
+        filename: 'user.db',
+        driver: sqlite3.Database
+    });
 const wss = new WebSocketServer({ server });
 function DirectionsFromAngle(yaw,pitch){
     const yawRad = yaw * Math.PI / 180;
@@ -108,17 +112,31 @@ online_usr.forEach((player, username) => {
             
             if (msg.type === 'auth') {
                 try {
-                    const decoded = jwt.verify(msg.token, SECRET)
-                    const username = decoded.usr
+                    let decoded = jwt.verify(msg.token, SECRET)
+                    let username = decoded.usr
                     ws.username = username
                     connections.set(username, ws)
                     online_usr.set(username, new Player(0, 0, 0, 0, 0, 100,100,100,[],username))
-                    const player = online_usr.get(ws.username);
-                    const rb = world.createRigidBody(
+                    let player = online_usr.get(ws.username);
+                    let inventory = JSON.parse(user.run("SELECT * from users WHERE username = ?", [username]))
+                    inventory = JSON.parse(rows[0].inventory);
+                    if (inventory){
+                        let rb = world.createRigidBody(
                         RAPIER.RigidBodyDesc.dynamic().setTranslation(player.x, player.y, player.z))
-                    rigidBodies.set(username, rb)
-                    colliderMap.set(collider.handle, { type: 'player', username: ws.username})
-                    ws.send(JSON.stringify({ type: 'auth', status: 'OK' }))
+                        rigidBodies.set(username, rb)
+                        colliderMap.set(collider.handle, { type: 'player', username: ws.username})
+                        ws.send(JSON.stringify({ type: 'auth', status: 'OK' }))
+                        ws.send(JSON.stringify({ type: 'inventory', status: inventory }))
+                    }
+                    else {
+                        let rb = world.createRigidBody(
+                        RAPIER.RigidBodyDesc.dynamic().setTranslation(player.x, player.y, player.z))
+                        rigidBodies.set(username, rb)
+                        colliderMap.set(collider.handle, { type: 'player', username: ws.username})
+                        ws.send(JSON.stringify({ type: 'auth', status: 'OK' }))
+                        user.run("UPDATE user; SET inventory = [{}]; WHERE username = ?;", [username])
+                    }
+                    
                 } catch {
                     ws.close()
                 }
