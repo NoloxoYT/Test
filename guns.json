@@ -5,7 +5,8 @@
             "supported_ammo": {
                 "308 WIN": {
                     "velocity": "810",
-                    "weight": "10.89"
+                    "weight": "10.89",
+                    "diameter": "7.62"
                 }
             },
             "magazine_supported": {
@@ -18,15 +19,18 @@
             "supported_ammo": {
                 "Federal Premium LE JHP": {
                     "velocity": "350",
-                    "weight": "8.04"
+                    "weight": "8.04",
+                    "diameter": "9"
                 },
                 "Winchester FMJ": {
                     "velocity": "363",
-                    "weight": "7.45"
+                    "weight": "7.45",
+                    "diameter": "9"
                 },
                 "PMC Bronze FMJ": {
                     "velocity": "350",
-                    "weight": "7.45"
+                    "weight": "7.45",
+                    "diameter": "9"
                 }
             },
             "magazine_supported": {
@@ -37,9 +41,10 @@
         "FAMAS": {
             "name": "FAMAS",
             "supported_ammo": {
-                "7.62mm NATO": {
+                "5.56x45mm NATO": {
                     "velocity": "853",
-                    "weight": "9.53"
+                    "weight": "9.53",
+                    "diameter": "5.56"
                 }
             },
             "magazine_supported": {

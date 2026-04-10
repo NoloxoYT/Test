@@ -12,13 +12,13 @@ for block in data:
     for entry in block.values():
         name = entry["name"]
         mag = entry["magazine_supported"]["name"]
-
         ammo = []
         for ammo_type, ammo_data in entry["supported_ammo"].items():
             ammo.append({
                 "type": ammo_type,
                 "velocity": int(ammo_data.get("velocity")),
-                "weight": float(ammo_data.get("weight") or ammo_data.get("weigth"))
+                "weight": float(ammo_data.get("weight") or ammo_data.get("weigth")),
+                "diameter": float(ammo_data.get("diameter"))
             })
 
         rows.append((name, mag, json.dumps(ammo)))

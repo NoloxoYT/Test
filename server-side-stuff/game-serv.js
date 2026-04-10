@@ -51,6 +51,12 @@ function DirectionsFromAngle(yaw,pitch){
         z: Math.cos(pitchRad) * Math.cos(yawRad)
     }
 }
+function calcDamage(weight_g, velocity, diameter_mm) {
+    const mass = weight_g / 1000 // en kg
+    const energy = 0.5 * mass * velocity * velocity // joules
+    const sectional = Math.PI * (diameter_mm / 2000) ** 2 // section en m²
+    return (energy / sectional) / 250000
+}
 function ballisticRaycast(origin, direction, speed, gravity, maxTime, steps, weight ,world) {
     const dt = maxTime / steps
     let pos = { ...origin }
@@ -79,6 +85,7 @@ function ballisticRaycast(origin, direction, speed, gravity, maxTime, steps, wei
                 point: ray.pointAt(hit.timeOfImpact),
                 distance: i * dt * speed,
                 collider: hit.collider,
+                vellocity: Math.sqrt(vel.x**2 + vel.y**2 + vel.z**2)
             }
         }
 
@@ -118,19 +125,16 @@ online_usr.forEach((player, username) => {
             }
             if (msg.type === 'mouv') {
                 try {
-                    const mouv = msg.mouv
-                    const player = online_usr.get(ws.username)
-                    const initial_x = player.x
-                    const initial_y = player.y
-                    const initial_z = player.z
-                    const initial_h = player.health
-                    const initial_hunger = player.hunger
-                    const initial_thirst = player.thirst
-                    const new_x = mouv.x
-                    const new_y = mouv.y
-                    const new_z = mouv.z
-                    const new_pitch = mouv.pitch
-                    const new_yaw = mouv.yaw
+                    let mouv = msg.mouv
+                    let player = online_usr.get(ws.username)
+                    let initial_x = player.x
+                    let initial_y = player.y
+                    let initial_z = player.z
+                    let new_x = mouv.x
+                    let new_y = mouv.y
+                    let new_z = mouv.z
+                    let new_pitch = mouv.pitch
+                    let new_yaw = mouv.yaw
                     if ( new_x > initial_x+10 || new_x < initial_x-10){
                             ws.close()
                             return
@@ -144,7 +148,12 @@ online_usr.forEach((player, username) => {
                                 return
                                 }
                                 else {
-                                    online_usr.set(ws.username, new Player(new_x,new_y,new_z,new_yaw,new_pitch,initial_h,initial_hunger,initial_thirst,[],0,ws.username))
+                                    player.x = new_x;
+                                    player.z = new_z;
+                                    player.y = new_y;
+                                    player.yaw = new_yaw;
+                                    player.pitch = new_pitch;
+                                    ws.send(JSON.stringify({ type: 'mouv', status: 'Granted' }))
                                 }
                 } catch {
                     ws.close()
@@ -152,47 +161,25 @@ online_usr.forEach((player, username) => {
             }
             if (msg.type === 'shoot') {
                 try {
-                    const player = online_usr.get(ws.username)
-                    const angles = msg.angle
-                    const initial_x = player.x
-                    const initial_y = player.y
-                    const initial_z = player.z
-                    const gun = player.hand
-                    const ammo = gun.ammo
-                    const current_weapon = JSON.parse(weapon.run("SELECT from guns WHERE name = ?", [gun]))
-                    const weight = current_weapon
-                    const yaw = angles.yaw
-                    const pitch = angles.pitch
-                    const initial_h = player.health
-                    const initial_hunger = player.hunger
-                    const initial_thirst = player.thirst
-                    const dir = DirectionsFromAngle(player.yaw, player.pitch)
-                    const result = ballisticRaycast(
-                        { x: player.x, y: player.y, z: player.z },
-                        dir,
-                        range,
-                        9.81,
-                        5,
-                        100,
-                        world
-                    )
-                    const impact = colliderMap.get(result.collider.handle)
+                    let player = online_usr.get(ws.username)
+                    let gun = player.hand
+                    let ammo = gun.ammo
+                    let current_weapon = JSON.parse(weapon.run("SELECT * from guns WHERE name = ?", [gun]))
+                    let current_bullet = JSON.parse(weapon.run("SELECT * from guns WHERE ammo = ? AND name = ?", [ammo, current_weapon]))
+                    let dir = DirectionsFromAngle(player.yaw, player.pitch)
+                    let result = ballisticRaycast(
+                        { x: player.x, y: player.y, z: player.z },dir, current_bullet.velocity, 9.81, 30,600,current_bullet.weight, world)
+                    let gun_dmg = calcDamage(current_bullet.weight, result.vellocity, current_bullet.diameter)
+                    let impact = colliderMap.get(result.collider.handle)
                     if (impact.type == 'player'){
-                        const imp_player_name = impact.username
-                        const imp_player = online_usr.get(player_name)
-                        const imp_initial_x = imp_player.x
-                        const imp_initial_y = imp_player.y
-                        const imp_initial_z = imp_player.z
-                        const imp_gun = imp_player.hand
-                        const imp_inv = imp_player.inv
-                        const imp_yaw = imp_player.yaw
-                        const imp_pitch = imp_player.pitch
-                        const imp_initial_h = player.health
-                        const imp_initial_hunger = player.hunger
-                        const imp_initial_thirst = player.thirst
-                        const new_health = imp_initial_h -= gun_dmg
-                        online_usr.set(imp_player_name, new Player(imp_initial_x,imp_initial_y,imp_initial_z,imp_yaw,imp_pitch,new_health,imp_initial_hunger,imp_initial_thirst,imp_inv,imp_gun,imp_player_name))
+                        let imp_player_name = impact.username
+                        let imp_player = online_usr.get(imp_player_name)
+                        let health = imp_player.health - gun_dmg
+                        imp_player.health -= gun_dmg
+                        let imp_p_ws = connections.get(imp_player_name)
+                        imp_p_ws.send(JSON.stringify({ type: 'health', health: health  }))
                     }
+                    ws.send(JSON.stringify({ type: 'shoot', status: 'Granted' }))
                     
                 } catch {
                     ws.close()
