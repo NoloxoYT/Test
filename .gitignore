@@ -1,6 +1,3 @@
-*.db
-*.db*
-.env
 **/node_modules
 **/godot-dev
 package-lock.json

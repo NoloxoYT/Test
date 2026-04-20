@@ -5,9 +5,10 @@ import { encode, decode, validate } from '@loxjs/node-base64/index.js';
 import sqlite3 from 'sqlite3';
 import express from 'express';
 import { open } from 'sqlite';
-
+const bcrypt = require('bcrypt');
 const app = express();
 const SECRET = process.env.JWT_SECRET;
+const saltRounds = process.env.SALT
 async function start() {
     const user = await open({
         filename: 'user.db',
@@ -16,8 +17,9 @@ async function start() {
     app.get('/auth/jwt',async (req, res) => {
         const usr = decode(req.query.usr)
         const psw = decode(req.query.psw)
-        const row = await user.get("SELECT * FROM users WHERE username = ? AND password = ?", [usr , psw])
-        if (row){
+        const row = await user.get("SELECT * FROM users WHERE username = ?" [usr])
+        ok = await bcrypt.compare(psw, row.password);
+        if (ok){
             const token = jwt.sign({ usr }, SECRET, { expiresIn: '48h' })
             res.status(201).send(token)
         } else {
@@ -30,6 +32,7 @@ async function start() {
         if (check) {
             res.status(401).send('Username is already taken')
         } else {
+            password = bcrypt.hashSync(password, saltRounds);
             await user.run("INSERT INTO users (username,password) VALUES (?,?)", [username, password])
         }
     });

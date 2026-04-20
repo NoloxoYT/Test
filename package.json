@@ -2,6 +2,7 @@
   "dependencies": {
     "@dotenvx/dotenvx-ops": "^0.37.4",
     "base64-js": "^1.5.1",
+    "bcrypt": "^6.0.0",
     "dotenv": "^17.4.1",
     "express": "^5.2.1",
     "express-async-handler": "^1.2.0",
