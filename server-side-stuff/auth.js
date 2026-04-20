@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import { encode, decode, validate } from '@loxjs/node-base64/index.js';
 import Database from 'better-sqlite3';
 import express from 'express';
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const app = express();
 const SECRET = process.env.JWT_SECRET;
 const saltRounds = process.env.SALT
