@@ -1,5 +1,4 @@
 {
-    "main": "auth.js",
     "type": "module",
     "dependencies": {
         "@dimforge/rapier3d-compat": "^0.19.3",
@@ -11,5 +10,7 @@
         "sqlite": "^5.1.1",
         "sqlite3": "^6.0.1",
         "ws": "^8.18.1"
-    }
-}
+    },
+    "scripts": {
+    "start": "node auth.js"
+    }}
