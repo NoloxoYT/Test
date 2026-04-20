@@ -5,6 +5,7 @@
     "dotenv": "^17.4.1",
     "express": "^5.2.1",
     "express-async-handler": "^1.2.0",
+    "sharp": "^0.34.5",
     "sqlite3": "^6.0.1",
     "valid-url": "^1.0.9",
     "ws": "^8.20.0"

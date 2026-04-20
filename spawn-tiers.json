@@ -1,0 +1,106 @@
+[
+    {
+        "tiers": {
+            "tier-1": {
+                "urban":{
+                    "shelf": {
+                        "":""
+                    },
+                    "tabletop":
+                    {
+                        "":""
+                    },
+                    "fireplace":{
+                        "":""
+                    }
+                },
+                "rural":{
+                    "shelf": {
+                        "":""
+                    },
+                    "tabletop":
+                    {
+                        "":""
+                    },
+                    "fireplace":{
+                        "":""
+                    }
+                }
+            },
+            "tier-2":{
+                "urban": {
+                    "shelf": {
+                        "":""
+                    },
+                    "tabletop":
+                    {
+                        "":""
+                    },
+                    "fireplace":{
+                        "":""
+                    }   
+                },
+                "military-outpost": {
+                    "shelf":{
+
+                    },
+                    "tabletop":{
+                    },
+                    "destroyed-armored-vehicle": {
+                    "":""
+                }
+            },
+            "tier-3":{
+                "military-base":{
+                    "shelf":{
+                        "":""
+                    },
+                    "tabletop":{
+                        "":""
+                    },
+                    "destroyed-armored-vehicle": {
+                    "":""
+                    }
+                },
+                "military-hospital": {
+                    "barrack":{
+
+                    },
+                    "tent":{
+
+                    }
+                }
+            },
+            "tier-4":{
+                "contaminated-area":{
+                    "military-base":{
+                    "shelf":{
+                        "":""
+                    },
+                    "tabletop":{
+                        "":""
+                    },
+                    "destroyed-armored-vehicle": {
+                    "":""
+                    }
+                },
+                "military-hospital": {
+                    "barrack":{
+                    },
+                    "tent":{
+
+                    }
+                },
+                "military-outpost": {
+                    "shelf":{
+                    },
+                    "tabletop":{
+                    },
+                    "destroyed-armored-vehicle": {
+                    "":""
+                    }
+                }
+            }
+        }
+    }
+}}]

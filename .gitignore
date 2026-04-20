@@ -6,3 +6,5 @@
 package-lock.json
 *.exe
 **/.vscode/
+**/map*
+**/client*

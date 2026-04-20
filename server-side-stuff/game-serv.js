@@ -7,16 +7,60 @@ import { createServer } from 'http'
 import RAPIER from '@dimforge/rapier3d-compat'
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
+import sharp from 'sharp';
 const colliderMap = new Map();
 const rigidBodies = new Map();
 const app = express();
 const server = createServer(app)
 await RAPIER.init()
+const CHUNK_SIZE = 256
 const world = new RAPIER.World({ x: 0, y: -9.81, z: 0 }) // gravité
-const groundDesc = RAPIER.RigidBodyDesc.fixed()
-const ground = world.createRigidBody(groundDesc)
-const groundCollider = RAPIER.ColliderDesc.cuboid(100, 0.1, 100)
-world.createCollider(groundCollider, ground)
+async function loadHeightmap(path) {
+    const { data, info } = await sharp(path)
+        .grayscale()
+        .raw()
+        .toBuffer({ resolveWithObject: true })
+    const heights = new Uint16Array(data.buffer)
+    
+    return {
+        data: heights,
+        width: info.width,
+        height: info.height
+    }
+}
+
+async function createTerrain(heightmap) {
+    const { data, width, height } = heightmap
+    const scale = 500 / 65535
+
+    for (let cx = 0; cx < Math.ceil(width / CHUNK_SIZE); cx++) {
+        for (let cz = 0; cz < Math.ceil(height / CHUNK_SIZE); cz++) {
+            const chunkW = Math.min(CHUNK_SIZE, width - cx * CHUNK_SIZE)
+            const chunkH = Math.min(CHUNK_SIZE, height - cz * CHUNK_SIZE)
+            
+            const heights = new Float32Array(chunkW * chunkH)
+            
+            for (let z = 0; z < chunkH; z++) {
+                for (let x = 0; x < chunkW; x++) {
+                    const srcIdx = (cz * CHUNK_SIZE + z) * width + (cx * CHUNK_SIZE + x)
+                    heights[z * chunkW + x] = data[srcIdx] * scale
+                }
+            }
+
+            const desc = RAPIER.ColliderDesc.heightfield(
+                chunkW - 1,
+                chunkH - 1,
+                heights,
+                { x: chunkW, y: 500, z: chunkH }
+            )
+            // positionner le chunk au bon endroit
+            desc.setTranslation(cx * CHUNK_SIZE, 0, cz * CHUNK_SIZE)
+            world.createCollider(desc)
+        }
+    }
+}
+const heightmap = await loadHeightmap('./map/heightmap.png')
+await createTerrain(heightmap)
 class Player {
     constructor(x,z,y,yaw,pitch,health,hunger,thirst,inventory,hand,name) {
         this.x = x
@@ -69,7 +113,7 @@ function ballisticRaycast(origin, direction, speed, gravity, maxTime, steps, wei
         y: direction.y * speed,
         z: direction.z * speed
     }
-    const gravity = gravity * (weight / 1000)
+    gravity = gravity * (weight / 1000)
     for (let i = 0; i < steps; i++) {
         // position suivante
         const nextPos = {
@@ -106,6 +150,7 @@ online_usr.forEach((player, username) => {
             rb.setTranslation({ x: player.x, y: player.y, z: player.z }, true)
             }
         })
+    
     wss.on('connection', (ws) => {
         ws.on('message', async (data) => {
             const msg = JSON.parse(data)
@@ -177,27 +222,34 @@ online_usr.forEach((player, username) => {
                     ws.close()
                 }
             }
-            if (msg.type === 'shoot') {
+            if (msg.type === 'shoot') { 
+                try {   
+                    let player = online_usr.get(ws.username)    
+                    let gun = player.hand   
+                    let ammo = gun.ammo 
+                    let current_weapon = JSON.parse(weapon.run("SELECT * from guns WHERE name = ?", [gun])) 
+                    let current_bullet = JSON.parse(weapon.run("SELECT * from guns WHERE ammo = ? AND name = ?", [ammo, current_weapon]))   
+                    let dir = DirectionsFromAngle(player.yaw, player.pitch) 
+                    let result = ballisticRaycast(  
+                        { x: player.x, y: player.y, z: player.z },dir, current_bullet.velocity, 9.81, 30,600,current_bullet.weight, world)  
+                    let gun_dmg = calcDamage(current_bullet.weight, result.vellocity, current_bullet.diameter)  
+                    let impact = colliderMap.get(result.collider.handle)    
+                    if (impact.type == 'player'){   
+                        let imp_player_name = impact.username   
+                        let imp_player = online_usr.get(imp_player_name)    
+                        let health = imp_player.health - gun_dmg    
+                        imp_player.health -= gun_dmg    
+                        let imp_p_ws = connections.get(imp_player_name) 
+                        imp_p_ws.send(JSON.stringify({ type: 'health', health: health  }))  
+                    }   
+                    ws.send(JSON.stringify({ type: 'shoot', status: 'Granted' }))   
+
+                } catch {   
+                    ws.close()  
+                }   
+            }
+            if (msg.type === 'inv') {
                 try {
-                    let player = online_usr.get(ws.username)
-                    let gun = player.hand
-                    let ammo = gun.ammo
-                    let current_weapon = JSON.parse(weapon.run("SELECT * from guns WHERE name = ?", [gun]))
-                    let current_bullet = JSON.parse(weapon.run("SELECT * from guns WHERE ammo = ? AND name = ?", [ammo, current_weapon]))
-                    let dir = DirectionsFromAngle(player.yaw, player.pitch)
-                    let result = ballisticRaycast(
-                        { x: player.x, y: player.y, z: player.z },dir, current_bullet.velocity, 9.81, 30,600,current_bullet.weight, world)
-                    let gun_dmg = calcDamage(current_bullet.weight, result.vellocity, current_bullet.diameter)
-                    let impact = colliderMap.get(result.collider.handle)
-                    if (impact.type == 'player'){
-                        let imp_player_name = impact.username
-                        let imp_player = online_usr.get(imp_player_name)
-                        let health = imp_player.health - gun_dmg
-                        imp_player.health -= gun_dmg
-                        let imp_p_ws = connections.get(imp_player_name)
-                        imp_p_ws.send(JSON.stringify({ type: 'health', health: health  }))
-                    }
-                    ws.send(JSON.stringify({ type: 'shoot', status: 'Granted' }))
                     
                 } catch {
                     ws.close()
