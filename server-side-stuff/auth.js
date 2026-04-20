@@ -26,15 +26,21 @@ app.get('/auth/jwt', async (req, res) => {
 });
 
 app.get('/auth/sign-in', async (req, res) => {
-    const password = decode(req.query.psw);
-    const username = decode(req.query.usr);
-    const check = user.prepare("SELECT * FROM users WHERE username = ?").get(username);
-    if (check) {
-        res.status(401).send('Username is already taken');
-    } else {
-        const hashed = bcrypt.hashSync(password, saltRounds);
-        user.prepare("INSERT INTO users (username,password) VALUES (?,?)").run(username, hashed);
-        res.status(201).send('User created');
+    try {
+        const password = decode(req.query.psw);
+        const username = decode(req.query.usr);
+        console.log('sign-in attempt:', username);
+        const check = user.prepare("SELECT * FROM users WHERE username = ?").get(username);
+        if (check) {
+            res.status(401).send('Username is already taken');
+        } else {
+            const hashed = bcrypt.hashSync(password, saltRounds);
+            user.prepare("INSERT INTO users (username,password) VALUES (?,?)").run(username, hashed);
+            res.status(201).send('User created');
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).send(err.message);
     }
 });
 
