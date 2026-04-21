@@ -10,6 +10,7 @@ const app = express();
 const SECRET = process.env.JWT_SECRET;
 const saltRounds = parseInt(process.env.SALT);
 const user = new Database('user.db');
+const servers = new Database('servers.db');
 
 app.get('/auth/jwt', async (req, res) => {
     const usr = decode(req.query.usr);
@@ -41,6 +42,43 @@ app.get('/auth/sign-in', async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).send(err.message);
+    }
+});
+app.get('/servers', async (req, res) => {
+    try {
+        if (req.query.name != null){
+            const server_name = (req.query.name);
+            var serv = servers.prepare("SELECT * FROM servers WHERE name = ?").get(server_name)
+            var serv_meta = JSON.stringify({ name: serv.name, ip: serv.ip, map: serv.map, max_player: serv.max_p, current_player: serv.current_p })
+            res.status(200).send(serv_meta)
+        }
+        else{
+            var max = req.query.max
+            var serv_list = servers.prepare("SELECT * FROM servers LIMIT ?").all(max);
+            res.status(200).send(JSON.stringify(serv_list))
+        }
+    }
+    catch(e){
+        console.log(e)
+    }
+});
+app.get('/servreg', async (req, res) => {
+    try{
+        var name = req.query.name
+        var max_player = req.query.max_player
+        var map = req.query.map
+        var ip = req.ip
+        var port = req.query.port
+        var UUID = name+map+str(max_player)+str(ip)+str(port)
+        UUID = bcrypt.hashSync(UUID, 3452)
+        if (servers.prepare("SELECT * FROM servers WHERE uuid =?").get(UUID)){
+            return
+        }
+        servers.prepare("INSERT INTO servers (name,max_player,map,ip,port, uuid) VALUES (?,?,?,?,?,?) ON CONFLICT(uuid) DO NOTHING;").run(name,max_player,map,ip,port,UUID); 
+        res.status(201).send(JSON.stringify(UUID))
+    }
+    catch(e){
+        console.log(e)
     }
 });
 
